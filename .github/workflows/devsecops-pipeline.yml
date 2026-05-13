@@ -2,90 +2,90 @@ name: Advanced DevSecOps Pipeline
 
 on:
   push:
-      branches:
-            - main
-              pull_request:
-              
-              jobs:
-              
-                scan:
-                    runs-on: ubuntu-latest
-                    
-                        steps:
-                              - name: Checkout code
-                                      uses: actions/checkout@v4
-                                      
-                                            - name: Set up Python
-                                                    uses: actions/setup-python@v5
-                                                            with:
-                                                                      python-version: '3.12'
-                                                                      
-                                                                            - name: Install dependencies
-                                                                                    run: pip install -r requirements.txt
-                                                                                    
-                                                                                          - name: Run Semgrep SAST Scan
-                                                                                                  uses: returntocorp/semgrep-action@v1
-                                                                                                          with:
-                                                                                                                    config: .semgrep.yml
-                                                                                                                    
-                                                                                                                          - name: Run Trivy Filesystem Scan
-                                                                                                                                  uses: aquasecurity/trivy-action@master
-                                                                                                                                          with:
-                                                                                                                                                    scan-type: fs
-                                                                                                                                                              format: table
-                                                                                                                                                                        output: trivy-results.txt
-                                                                                                                                                                        
-                                                                                                                                                                              - name: Upload vulnerability scan
-                                                                                                                                                                                      uses: actions/upload-artifact@v4
-                                                                                                                                                                                              with:
-                                                                                                                                                                                                        name: vulnerability-scan
-                                                                                                                                                                                                                  path: trivy-results.txt
-                                                                                                                                                                                                                  
-                                                                                                                                                                                                                    build:
-                                                                                                                                                                                                                        needs: scan
-                                                                                                                                                                                                                            runs-on: ubuntu-latest
-                                                                                                                                                                                                                            
-                                                                                                                                                                                                                                steps:
-                                                                                                                                                                                                                                      - name: Checkout code
-                                                                                                                                                                                                                                              uses: actions/checkout@v4
-                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                    - name: Build Docker image
-                                                                                                                                                                                                                                                            run: |
-                                                                                                                                                                                                                                                                      docker build -t secure-app:${{ github.sha }} .
-                                                                                                                                                                                                                                                                      
-                                                                                                                                                                                                                                                                            - name: Generate SBOM
-                                                                                                                                                                                                                                                                                    uses: anchore/sbom-action@v0
-                                                                                                                                                                                                                                                                                            with:
-                                                                                                                                                                                                                                                                                                      image: secure-app:${{ github.sha }}
-                                                                                                                                                                                                                                                                                                                format: cyclonedx-json
-                                                                                                                                                                                                                                                                                                                          output-file: sbom.json
-                                                                                                                                                                                                                                                                                                                          
-                                                                                                                                                                                                                                                                                                                                - name: Container Image Scan
-                                                                                                                                                                                                                                                                                                                                        uses: aquasecurity/trivy-action@master
-                                                                                                                                                                                                                                                                                                                                                with:
-                                                                                                                                                                                                                                                                                                                                                          image-ref: secure-app:${{ github.sha }}
-                                                                                                                                                                                                                                                                                                                                                                    format: table
-                                                                                                                                                                                                                                                                                                                                                                              output: image-scan.txt
-                                                                                                                                                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                                                                                                                                                    - name: Upload SBOM
-                                                                                                                                                                                                                                                                                                                                                                                            uses: actions/upload-artifact@v4
-                                                                                                                                                                                                                                                                                                                                                                                                    with:
-                                                                                                                                                                                                                                                                                                                                                                                                              name: sbom
-                                                                                                                                                                                                                                                                                                                                                                                                                        path: sbom.json
-                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                              - name: Upload container scan
-                                                                                                                                                                                                                                                                                                                                                                                                                                      uses: actions/upload-artifact@v4
-                                                                                                                                                                                                                                                                                                                                                                                                                                              with:
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        name: container-scan
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                  path: image-scan.txt
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        - name: Mark trusted build
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                run: |
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          echo "TRUSTED_BUILD=true" > trusted-build.txt
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    echo "IMAGE_ID=secure-app:${{ github.sha }}" >> trusted-build.txt
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          - name: Upload trusted build metadata
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  uses: actions/upload-artifact@v4
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          with:
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    name: trusted-build
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              path: trusted-build.txt                                                                                                                                                                                                                                   echo "Deploying secu
+    branches:
+      - main
+  pull_request:
+
+jobs:
+
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Semgrep SAST Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+
+      - name: Run Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          format: table
+          output: trivy-results.txt
+
+      - name: Upload vulnerability scan
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-scan
+          path: trivy-results.txt
+
+  build:
+    needs: scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t secure-app:${{ github.sha }} .
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: secure-app:${{ github.sha }}
+          format: cyclonedx-json
+          output-file: sbom.json
+
+      - name: Container Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: secure-app:${{ github.sha }}
+          format: table
+          output: image-scan.txt
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+      - name: Upload container scan
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-scan
+          path: image-scan.txt
+
+      - name: Mark trusted build
+        run: |
+          echo "TRUSTED_BUILD=true" > trusted-build.txt
+          echo "IMAGE_ID=secure-app:${{ github.sha }}" >> trusted-build.txt
+
+      - name: Upload trusted build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: trusted-build
+          path: trusted-build.txt                                                                                                                                                                                                                                echo "Deploying secu
